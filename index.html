@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Firebase Relay Control Dashboard</title>
+  <title>Parashar's Home Control Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -52,7 +52,7 @@
     .relay-card button:hover {
       opacity: 0.8;
     }
-    #allOffBtn, #logoutBtn {
+    #allOffBtn, #allBtn, #logoutBtn {
       max-width: 300px;
       width: 90%;
       padding: 12px 25px;
@@ -66,9 +66,15 @@
       transition: opacity 0.3s ease;
     }
     #allOffBtn {
-      background-color: #d32f2f;
+      background-color: #3dd32f;
     }
     #allOffBtn:hover {
+      opacity: 0.8;
+    }
+    #allBtn {
+      background-color: #d32f2f;
+    }
+    #allBtn:hover {
       opacity: 0.8;
     }
     #logoutBtn {
@@ -144,7 +150,7 @@
 </head>
 <body>
 
-  <h1>Firebase Relay Control Dashboard</h1>
+  <h1>Parashar's Home Control Dashboard</h1>
 
   <!-- Login form -->
   <div id="loginForm">
@@ -181,12 +187,13 @@
       </div>
     </div>
 
-    <button id="allOffBtn">All OFF</button>
+    <button id="allOffBtn">All ON</button>
+    <button id="allBtn">All OFF</button>
     <button id="logoutBtn">Logout</button>
   </div>
 
   <footer>
-    Created by Tech StudyCell
+    Created by Parashar Dutta ( The Math Classroom )
   </footer>
 
   <!-- Firebase SDKs -->
@@ -251,8 +258,8 @@
 
         relayRef.on("value", (snapshot) => {
           const state = snapshot.val();
-          statusText.innerText = state ? "ON" : "OFF";
-          toggleButton.style.backgroundColor = state ? "green" : "blue";
+          statusText.innerText = state ? "OFF" : "ON";
+          toggleButton.style.backgroundColor = state ? "red" : "green";
         });
 
         toggleButton.onclick = () => {
@@ -267,6 +274,12 @@
           db.ref("/" + relay.path).set(false);
         });
       };
+      document.getElementById("allBtn").onclick = () => {
+        relays.forEach(relay => {
+          db.ref("/" + relay.path).set(true);
+        });
+      };
+
     }
 
     document.getElementById("logoutBtn").onclick = () => {
