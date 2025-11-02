@@ -2,99 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Parashar Home Switch Control</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f1f1f1;
-      text-align: center;
+      background: #f4f4f4;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+      opacity: 0;
+      transform: scale(0.9);
+      transition: all 0.4s ease;
+    }
+    .container.show {
+      opacity: 1;
+      transform: scale(1);
     }
     h1 {
+      margin-bottom: 20px;
       color: #333;
     }
-    .password-box {
-      margin: 15px auto;
+    input {
+      width: 80%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      color: white;
+      background-color: #2196F3;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #1976D2;
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
-      max-width: 500px;
-      margin: 0 auto;
+      margin-top: 20px;
     }
-    button {
+    .toggle {
+      position: relative;
       width: 100%;
-      padding: 15px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
+      height: 50px;
+      background-color: #f44336;
+      border-radius: 30px;
       cursor: pointer;
-      color: #fff;
-      transition: all 0.3s ease;
+      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
     }
-    .on {
+    .toggle.on {
       background-color: #4CAF50;
     }
-    .off {
-      background-color: #f44336;
+    .actions {
+      margin-top: 20px;
     }
-    .all {
+    .actions button {
       background-color: #2196F3;
+      margin: 5px;
+    }
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   </style>
 </head>
 <body>
 
-  <h1>Parashar Home Switch Control</h1>
-  <div class="password-box">
-    <input type="password" id="pass" placeholder="Enter Password" style="padding:8px; font-size:16px;">
-    <button onclick="savePassword()">Save</button>
+  <!-- Login Page -->
+  <div class="container show" id="login">
+    <h1>Parashar Home Login</h1>
+    <input type="text" id="username" placeholder="Username"><br>
+    <input type="password" id="password" placeholder="Password"><br>
+    <button id="loginBtn">Login</button>
   </div>
 
-  <div class="grid">
-    <button id="btn1" class="off" onclick="toggleSwitch(1)">Switch 1: OFF</button>
-    <button id="btn2" class="off" onclick="toggleSwitch(2)">Switch 2: OFF</button>
-    <button id="btn3" class="off" onclick="toggleSwitch(3)">Switch 3: OFF</button>
-    <button id="btn4" class="off" onclick="toggleSwitch(4)">Switch 4: OFF</button>
-    <button class="all" onclick="setAll(0)">All ON</button>
-    <button class="all" onclick="setAll(1)">All OFF</button>
+  <!-- Main Switch Control Page -->
+  <div class="container" id="main" style="display:none;">
+    <h1>Parashar Home Switch Control</h1>
+    <div class="grid">
+      <div class="toggle" id="btn1" onclick="toggleSwitch(1)">Switch 1: OFF</div>
+      <div class="toggle" id="btn2" onclick="toggleSwitch(2)">Switch 2: OFF</div>
+      <div class="toggle" id="btn3" onclick="toggleSwitch(3)">Switch 3: OFF</div>
+      <div class="toggle" id="btn4" onclick="toggleSwitch(4)">Switch 4: OFF</div>
+    </div>
+    <div class="actions">
+      <button onclick="setAll(0)">All ON</button>
+      <button onclick="setAll(1)">All OFF</button>
+    </div>
   </div>
 
   <script>
     const workerURL = "https://nodemcubittu.psdutta426.workers.dev"; // your Cloudflare Worker URL
-    let password = "mysecret"; // change if you used a different one
+    let apiPassword = "";
 
-    function savePassword() {
-      password = document.getElementById("pass").value;
-      alert("Password saved!");
+    // Fade in animation on load
+    window.onload = () => {
+      document.querySelector(".container").classList.add("show");
+    };
+
+    // Allow Enter key to trigger login
+    document.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && document.getElementById("login").style.display !== "none") {
+        login();
+      }
+    });
+
+    document.getElementById("loginBtn").addEventListener("click", login);
+
+    async function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+
+      if (!user || !pass) return alert("Please enter both fields.");
+
+      try {
+        const res = await fetch(`${workerURL}/auth?username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}`);
+        const text = await res.text();
+
+        if (text.trim() === "OK") {
+          apiPassword = pass;
+          document.getElementById("login").style.display = "none";
+          const main = document.getElementById("main");
+          main.style.display = "block";
+          setTimeout(() => main.classList.add("show"), 100);
+        } else {
+          alert("Invalid username or password");
+        }
+      } catch (err) {
+        alert("Login failed: network or server issue");
+      }
     }
 
     async function toggleSwitch(num) {
       const btn = document.getElementById("btn" + num);
-      const pin = "v" + num;
       const isOn = btn.classList.contains("on");
-      const value = isOn ? 1 : 0; // 0 = ON, 1 = OFF (your logic)
-      const res = await fetch(`${workerURL}/update?pin=${pin}&value=${value}&password=${password}`);
-      if (res.ok) {
-        btn.classList.toggle("on");
-        btn.classList.toggle("off");
-        btn.textContent = `Switch ${num}: ${isOn ? "OFF" : "ON"}`;
-      } else {
-        alert("Unauthorized or network error");
+      const value = isOn ? 1 : 0; // 0 = ON, 1 = OFF
+      const pin = "v" + num;
+
+      try {
+        const res = await fetch(`${workerURL}/update?pin=${pin}&value=${value}&password=${encodeURIComponent(apiPassword)}`);
+        if (res.ok) {
+          btn.classList.toggle("on", !isOn);
+          btn.textContent = `Switch ${num}: ${isOn ? "OFF" : "ON"}`;
+        } else {
+          alert("Error: Unauthorized or network issue");
+        }
+      } catch {
+        alert("Error connecting to Worker");
       }
     }
 
     async function setAll(value) {
       for (let i = 1; i <= 4; i++) {
-        await fetch(`${workerURL}/update?pin=v${i}&value=${value}&password=${password}`);
-        const btn = document.getElementById("btn" + i);
-        const isOn = value === 0;
-        btn.classList.toggle("on", isOn);
-        btn.classList.toggle("off", !isOn);
-        btn.textContent = `Switch ${i}: ${isOn ? "ON" : "OFF"}`;
+        try {
+          await fetch(`${workerURL}/update?pin=v${i}&value=${value}&password=${encodeURIComponent(apiPassword)}`);
+          const btn = document.getElementById("btn" + i);
+          const isOn = value === 0;
+          btn.classList.toggle("on", isOn);
+          btn.textContent = `Switch ${i}: ${isOn ? "ON" : "OFF"}`;
+        } catch {
+          console.log("Error setting switch " + i);
+        }
       }
     }
   </script>
