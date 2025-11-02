@@ -9,21 +9,37 @@
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #e0f7fa, #f9f9f9);
+      height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #e0f7fa, #f9f9f9);
     }
+
+    /* ✅ Background image with 45% transparency */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('Picsart_24-11-27_19-08-18-950_612118_SP-507.jpg') no-repeat center center/cover;
+      opacity: 0.45;
+      z-index: -1;
+    }
+
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
       padding: 30px;
       border-radius: 20px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.1);
       text-align: center;
       width: 90%;
       max-width: 450px;
+      transition: all 0.3s ease;
     }
+
     h2 { color: #222; margin-bottom: 25px; }
     input {
       padding: 12px; width: 85%; margin: 10px 0;
@@ -35,10 +51,12 @@
     }
     #loginBtn { width: 100%; background: #0078d7; color: white; }
     #loginBtn:hover { background: #005fa3; }
+
     .switch-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 15px; margin-bottom: 15px;
     }
+
     .switch-btn {
       background: #f44336; color: white; font-weight: bold;
       border-radius: 15px; height: 60px; font-size: 18px;
@@ -48,9 +66,14 @@
       background: #4CAF50;
       box-shadow: 0 4px 12px rgba(76,175,80,0.5);
     }
+
     .action-btn { background: #0078d7; color: white; width: 45%; }
     .logout-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
     #loginStatus { color: red; font-size: 14px; height: 20px; }
+
+    @media (max-width: 500px) {
+      .switch-grid { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -82,8 +105,21 @@
     let username = "", password = "", refreshInterval;
 
     document.getElementById("loginBtn").addEventListener("click", login);
-    document.addEventListener("keypress", e => {
-      if (e.key === "Enter" && document.getElementById("loginPage").style.display !== "none") login();
+
+    // Enter on username focuses password
+    document.getElementById("username").addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("password").focus();
+      }
+    });
+
+    // Enter on password triggers login
+    document.getElementById("password").addEventListener("keypress", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        login();
+      }
     });
 
     async function login() {
@@ -102,7 +138,7 @@
           document.getElementById("loginPage").style.display = "none";
           document.getElementById("controlPage").style.display = "block";
           loadStatus();
-          refreshInterval = setInterval(loadStatus, 5000); // auto-refresh every 5s
+          refreshInterval = setInterval(loadStatus, 5000);
         } else {
           document.getElementById("loginStatus").textContent = "Login failed.";
         }
