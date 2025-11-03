@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parashar Home Switch Control</title>
+  <title>Parashar's Home Switch Control</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -16,7 +16,6 @@
       background: linear-gradient(135deg, #d9f3ff, #f9f9f9);
     }
 
-    /* ✅ Container with image background */
     .container {
       position: relative;
       width: 90%;
@@ -27,61 +26,47 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.15);
       text-align: center;
       backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    /* Background image inside container only */
     .container::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: url('https://raw.githubusercontent.com/psdutta426/Home/main/Picsart_24-11-27_19-08-18-950_612118_SP-507.jpg') 
+      background: url('https://raw.githubusercontent.com/psdutta426/Home/main/TheMathClassroom.jpg')
         no-repeat center center/cover;
       opacity: 0.25;
       z-index: -1;
     }
 
-    h2 {
-      color: #111;
-      margin-bottom: 25px;
-      font-weight: 600;
-    }
-
+    h2 { color: #111; margin-bottom: 25px; font-weight: 600; }
     input {
-      padding: 12px;
-      width: 85%;
-      margin: 10px 0;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 16px;
+      padding: 12px; width: 85%; margin: 10px 0;
+      border-radius: 10px; border: 1px solid #ccc; font-size: 16px;
     }
 
     button {
-      border: none;
-      border-radius: 10px;
-      padding: 15px;
-      margin: 10px;
-      font-size: 16px;
-      transition: all 0.3s ease;
-      cursor: pointer;
+      border: none; border-radius: 10px; padding: 15px; margin: 10px;
+      font-size: 16px; transition: all 0.3s ease; cursor: pointer;
     }
 
     #loginBtn { width: 100%; background: #0078d7; color: white; }
     #loginBtn:hover { background: #005fa3; }
 
     .switch-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-bottom: 15px;
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 15px; margin-bottom: 15px;
     }
 
     .switch-btn {
-      background: #f44336;
-      color: white;
-      font-weight: bold;
-      border-radius: 15px;
-      height: 60px;
-      font-size: 18px;
+      background: #f44336; color: white; font-weight: bold;
+      border-radius: 15px; height: 60px; font-size: 18px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       transition: all 0.3s ease;
     }
@@ -91,31 +76,49 @@
       box-shadow: 0 4px 12px rgba(76,175,80,0.5);
     }
 
-    .action-btn {
-      background: #0078d7;
-      color: white;
-      width: 45%;
+    .action-btn { background: #0078d7; color: white; width: 45%; }
+    .logout-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
+    #loginStatus { color: red; font-size: 14px; height: 20px; }
+
+    /* Loading screen */
+    #loadingScreen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.9);
+      font-size: 18px;
+      color: #333;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    #loadingScreen.show {
+      opacity: 1;
     }
 
-    .logout-btn {
-      background: #555;
-      color: white;
-      width: 100%;
-      margin-top: 10px;
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #ccc;
+      border-top-color: #0078d7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
     }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    #loginStatus {
-      color: red;
-      font-size: 14px;
-      height: 20px;
-    }
-
-    @media (max-width: 500px) {
-      .switch-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+    @media (max-width: 500px) { .switch-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 </head>
 <body>
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div>Checking saved login…</div>
+  </div>
+
   <div class="container" id="loginPage">
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Username" required /><br />
@@ -125,7 +128,7 @@
   </div>
 
   <div class="container" id="controlPage" style="display:none;">
-    <h2>Parashar Home Switch Control</h2>
+    <h2>Parashar's Home Switch Control</h2>
     <div class="switch-grid">
       <button class="switch-btn" id="btn1" onclick="toggleSwitch(1)">Switch 1</button>
       <button class="switch-btn" id="btn2" onclick="toggleSwitch(2)">Switch 2</button>
@@ -144,19 +147,38 @@
     let username = "", password = "", refreshInterval;
 
     document.getElementById("loginBtn").addEventListener("click", login);
-
     document.getElementById("username").addEventListener("keypress", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        document.getElementById("password").focus();
-      }
+      if (e.key === "Enter") { e.preventDefault(); document.getElementById("password").focus(); }
+    });
+    document.getElementById("password").addEventListener("keypress", e => {
+      if (e.key === "Enter") { e.preventDefault(); login(); }
     });
 
-    document.getElementById("password").addEventListener("keypress", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        login();
+    // Auto-login on load
+    window.addEventListener("load", async () => {
+      const loading = document.getElementById("loadingScreen");
+      loading.classList.add("show");
+
+      const savedUser = localStorage.getItem("username");
+      const savedPass = localStorage.getItem("password");
+
+      if (savedUser && savedPass) {
+        try {
+          const res = await fetch(`${workerURL}/auth?username=${savedUser}&password=${savedPass}`);
+          const text = await res.text();
+          if (text === "OK") {
+            username = savedUser;
+            password = savedPass;
+            await new Promise(r => setTimeout(r, 800)); // smooth transition
+            loading.classList.remove("show");
+            showControlPanel();
+            return;
+          }
+        } catch {}
       }
+      await new Promise(r => setTimeout(r, 800));
+      loading.classList.remove("show");
+      document.getElementById("loginPage").classList.add("show");
     });
 
     async function login() {
@@ -172,16 +194,24 @@
         const res = await fetch(`${workerURL}/auth?username=${username}&password=${password}`);
         const text = await res.text();
         if (text === "OK") {
-          document.getElementById("loginPage").style.display = "none";
-          document.getElementById("controlPage").style.display = "block";
-          loadStatus();
-          refreshInterval = setInterval(loadStatus, 5000);
+          localStorage.setItem("username", username);
+          localStorage.setItem("password", password);
+          showControlPanel();
         } else {
           document.getElementById("loginStatus").textContent = "Login failed.";
         }
       } catch {
         document.getElementById("loginStatus").textContent = "Network or server issue.";
       }
+    }
+
+    function showControlPanel() {
+      document.getElementById("loginPage").style.display = "none";
+      const panel = document.getElementById("controlPage");
+      panel.style.display = "block";
+      setTimeout(() => panel.classList.add("show"), 50);
+      loadStatus();
+      refreshInterval = setInterval(loadStatus, 2000);
     }
 
     async function loadStatus() {
@@ -203,14 +233,11 @@
       const btn = document.getElementById(`btn${num}`);
       const isOn = btn.classList.contains("on");
       const newValue = isOn ? 1 : 0;
-
       try {
         await fetch(`${workerURL}/update?pin=v${num}&value=${newValue}&password=${password}`);
         btn.classList.toggle("on");
         btn.textContent = `Switch ${num}: ${!isOn ? "ON" : "OFF"}`;
-      } catch {
-        alert("Network issue while toggling.");
-      }
+      } catch { alert("Network issue while toggling."); }
     }
 
     async function allOn() {
@@ -233,11 +260,12 @@
 
     function logout() {
       clearInterval(refreshInterval);
+      localStorage.removeItem("username");
+      localStorage.removeItem("password");
       document.getElementById("controlPage").style.display = "none";
-      document.getElementById("loginPage").style.display = "block";
+      document.getElementById("loginPage").classList.add("show");
       username = ""; password = "";
     }
   </script>
 </body>
 </html>
-
