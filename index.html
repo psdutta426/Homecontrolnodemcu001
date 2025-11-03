@@ -60,6 +60,8 @@
     #loginBtn { width: 100%; background: #0078d7; color: white; }
     #loginBtn:hover { background: #005fa3; }
 
+    label { display: inline-block; margin-top: 5px; font-size: 14px; color: #333; }
+
     .switch-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 15px; margin-bottom: 15px;
@@ -126,6 +128,7 @@
     <h2>Login</h2>
     <input type="text" id="username" placeholder="Username" required /><br />
     <input type="password" id="password" placeholder="Password" required /><br />
+    <label><input type="checkbox" id="rememberMe" /> Remember this browser</label><br/>
     <button id="loginBtn">Login</button>
     <div id="loginStatus"></div>
   </div>
@@ -163,6 +166,11 @@
 
       const savedUser = localStorage.getItem("username");
       const savedPass = localStorage.getItem("password");
+      if (savedUser && savedPass) {
+        document.getElementById("username").value = savedUser;
+        document.getElementById("password").value = savedPass;
+        document.getElementById("rememberMe").checked = true;
+      }
 
       let autoLogin = false;
 
@@ -178,11 +186,8 @@
         } catch {}
       }
 
-      // Wait briefly for smooth transition
       await new Promise(r => setTimeout(r, 800));
       loading.classList.remove("show");
-
-      // Remove the overlay after fade out so inputs work
       setTimeout(() => { loading.style.display = "none"; }, 600);
 
       if (autoLogin) showControlPanel();
@@ -202,8 +207,13 @@
         const res = await fetch(`${workerURL}/auth?username=${username}&password=${password}`);
         const text = await res.text();
         if (text === "OK") {
-          localStorage.setItem("username", username);
-          localStorage.setItem("password", password);
+          if (document.getElementById("rememberMe").checked) {
+            localStorage.setItem("username", username);
+            localStorage.setItem("password", password);
+          } else {
+            localStorage.removeItem("username");
+            localStorage.removeItem("password");
+          }
           showControlPanel();
         } else {
           document.getElementById("loginStatus").textContent = "Login failed.";
@@ -276,5 +286,5 @@
     }
   </script>
 </body>
-</html>
-
+        </html>
+        
