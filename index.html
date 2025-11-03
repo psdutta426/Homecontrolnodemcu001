@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parashar's Home Switch Control</title>
+  <title>Parashar Home Switch Control</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -29,6 +29,7 @@
       opacity: 0;
       transform: translateY(20px);
       transition: opacity 0.6s ease, transform 0.6s ease;
+      z-index: 1;
     }
     .show {
       opacity: 1;
@@ -39,7 +40,7 @@
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: url('https://raw.githubusercontent.com/psdutta426/Home/main/TheMathClassroom.jpg')
+      background: url('https://raw.githubusercontent.com/psdutta426/Homecontrolnodemcu001/main/Picsart_24-11-27_19-08-18-950_612118_SP-507.jpg')
         no-repeat center center/cover;
       opacity: 0.25;
       z-index: -1;
@@ -82,21 +83,23 @@
 
     /* Loading screen */
     #loadingScreen {
-      position: absolute;
+      position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-direction: column;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       font-size: 18px;
       color: #333;
-      z-index: 100;
+      z-index: 999;
       opacity: 0;
+      pointer-events: none;
       transition: opacity 0.5s ease;
     }
     #loadingScreen.show {
       opacity: 1;
+      pointer-events: all;
     }
 
     .spinner {
@@ -128,7 +131,7 @@
   </div>
 
   <div class="container" id="controlPage" style="display:none;">
-    <h2>Parashar's Home Switch Control</h2>
+    <h2>Parashar Home Switch Control</h2>
     <div class="switch-grid">
       <button class="switch-btn" id="btn1" onclick="toggleSwitch(1)">Switch 1</button>
       <button class="switch-btn" id="btn2" onclick="toggleSwitch(2)">Switch 2</button>
@@ -154,13 +157,14 @@
       if (e.key === "Enter") { e.preventDefault(); login(); }
     });
 
-    // Auto-login on load
     window.addEventListener("load", async () => {
       const loading = document.getElementById("loadingScreen");
       loading.classList.add("show");
 
       const savedUser = localStorage.getItem("username");
       const savedPass = localStorage.getItem("password");
+
+      let autoLogin = false;
 
       if (savedUser && savedPass) {
         try {
@@ -169,16 +173,20 @@
           if (text === "OK") {
             username = savedUser;
             password = savedPass;
-            await new Promise(r => setTimeout(r, 800)); // smooth transition
-            loading.classList.remove("show");
-            showControlPanel();
-            return;
+            autoLogin = true;
           }
         } catch {}
       }
+
+      // Wait briefly for smooth transition
       await new Promise(r => setTimeout(r, 800));
       loading.classList.remove("show");
-      document.getElementById("loginPage").classList.add("show");
+
+      // Remove the overlay after fade out so inputs work
+      setTimeout(() => { loading.style.display = "none"; }, 600);
+
+      if (autoLogin) showControlPanel();
+      else document.getElementById("loginPage").classList.add("show");
     });
 
     async function login() {
@@ -211,7 +219,7 @@
       panel.style.display = "block";
       setTimeout(() => panel.classList.add("show"), 50);
       loadStatus();
-      refreshInterval = setInterval(loadStatus, 2000);
+      refreshInterval = setInterval(loadStatus, 5000);
     }
 
     async function loadStatus() {
