@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parashar's Home Switch Control</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #d9f3ff, #f9f9f9);
+    }
+
+    .container {
+      position: relative;
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      text-align: center;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      z-index: 1;
+    }
+    .show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('https://raw.githubusercontent.com/psdutta426/Home/main/TheMathClassroom.jpg')
+        no-repeat center center/cover;
+      opacity: 0.25;
+      z-index: -1;
+    }
+
+    h2 { color: #111; margin-bottom: 25px; font-weight: 600; }
+    input {
+      padding: 12px; width: 85%; margin: 10px 0;
+      border-radius: 10px; border: 1px solid #ccc; font-size: 16px;
+    }
+
+    button {
+      border: none; border-radius: 10px; padding: 15px; margin: 10px;
+      font-size: 16px; transition: all 0.3s ease; cursor: pointer;
+    }
+
+    #loginBtn { width: 100%; background: #0078d7; color: white; }
+    #loginBtn:hover { background: #005fa3; }
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .switch-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 15px; margin-bottom: 15px;
+    }
+    
+    /* Make 5th button span full width */
+    .switch-grid .switch-btn:nth-child(5) {
+      grid-column: 1 / -1;
+    }
+
+    .switch-btn {
+      background: #f44336; color: white; font-weight: bold;
+      border-radius: 15px; height: 60px; font-size: 16px; /* Smaller font for longer names */
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .switch-btn.on {
+      background: #4CAF50;
+      box-shadow: 0 4px 12px rgba(76,175,80,0.5);
+    }
+
+    .action-btn { background: #0078d7; color: white; width: 45%; }
+    .logout-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
+    #loginStatus { color: red; font-size: 14px; height: 20px; }
+
+    /* Loading screen */
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 18px;
+      color: #333;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #loadingScreen.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #loadingMessage {
+      text-align: center;
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #ccc;
+      border-top-color: #0078d7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div id="loadingMessage">Checking saved session…</div>
+  </div>
+
+  <div class="container" id="loginPage">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" required /><br />
+    <input type="password" id="password" placeholder="Password" required /><br />
+    <label><input type="checkbox" id="rememberMe"> Remember Me</label>
+    <button id="loginBtn">Login</button>
+    <div id="loginStatus"></div>
+  </div>
+
+  <div class="container" id="controlPage" style="display:none;">
+    <h2>Parashar's Home Switch Control</h2>
+    <div class="switch-grid">
+      <button class="switch-btn" id="btn0" onclick="toggleSwitch(0)">Backup</button>
+      <button class="switch-btn" id="btn1" onclick="toggleSwitch(1)">Tubelight</button>
+      <button class="switch-btn" id="btn2" onclick="toggleSwitch(2)">Fan</button>
+      <button class="switch-btn" id="btn3" onclick="toggleSwitch(3)">Bulb</button>
+      <button class="switch-btn" id="btn4" onclick="toggleSwitch(4)">Plug</button>
+    </div>
+    <div>
+      <button class="action-btn" onclick="allOn()">All ON</button>
+      <button class="action-btn" onclick="allOff()">All OFF</button>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    const workerURL = "https://nodemcubittu.psdutta426.workers.dev";
+    let authToken = null;
+    let refreshInterval;
+    
+    // Maps button index to its name and API pin
+    const switches = [
+      { id: "btn0", name: "Backup",    pin: "v1" },
+      { id: "btn1", name: "Tubelight", pin: "v2" },
+      { id: "btn2", name: "Fan",       pin: "v3" },
+      { id: "btn3", name: "Bulb",      pin: "v4" },
+      { id: "btn4", name: "Plug",      pin: "v5" }
+    ];
+
+    // --- DOM Elements ---
+    const loginBtn = document.getElementById("loginBtn");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loadingMessage = document.getElementById("loadingMessage");
+    const loginStatus = document.getElementById("loginStatus");
+
+    // --- Event Listeners ---
+    loginBtn.addEventListener("click", login);
+    usernameInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") { e.preventDefault(); passwordInput.focus(); }
+    });
+    passwordInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") { e.preventDefault(); login(); }
+    });
+
+    window.addEventListener("load", autoLogin);
+
+    // --- Core Functions ---
+
+    /**
+     * A wrapper for fetch that automatically adds the Auth token
+     * and handles auth failures (401/403) by logging out.
+     */
+    async function fetchWithAuth(url, options = {}) {
+      const headers = new Headers(options.headers || {});
+      if (authToken) {
+        headers.append("Authorization", `Bearer ${authToken}`);
+      }
+      
+      const response = await fetch(url, { ...options, headers });
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          // Token is invalid or expired
+          alert("Your session has expired. Please log in again.");
+          logout();
+          throw new Error("Authentication failed");
+        }
+        throw new Error(`Network error: ${response.statusText}`);
+      }
+      return response;
+    }
+
+    /**
+     * Checks for a saved token in localStorage and tries to validate it.
+     */
+    async function autoLogin() {
+      loadingScreen.classList.add("show");
+      const savedToken = localStorage.getItem("authToken");
+      let autoLoginSuccess = false;
+
+      if (savedToken) {
+        authToken = savedToken;
+        try {
+          // Validate token by fetching status. 
+          // Your worker must validate the token for /status.
+          await fetchWithAuth(`${workerURL}/status`);
+          autoLoginSuccess = true;
+        } catch {
+          // Token is invalid, clear it
+          authToken = null;
+          localStorage.removeItem("authToken");
+        }
+      }
+
+      await new Promise(r => setTimeout(r, 800)); // Show loading
+      loadingScreen.classList.remove("show");
+      setTimeout(() => { loadingScreen.style.display = "none"; }, 600);
+
+      if (autoLoginSuccess) {
+        showControlPanel();
+      } else {
+        document.getElementById("loginPage").classList.add("show");
+      }
+    }
+
+    /**
+     * Attempts to log in with username/password to get a token.
+     */
+    async function login() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      const remember = document.getElementById("rememberMe").checked;
+
+      if (!username || !password) {
+        loginStatus.textContent = "Enter username & password.";
+        return;
+      }
+      
+      loginStatus.textContent = "";
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Logging in...";
+
+      try {
+        // **SECURITY FIX:** Sending login via POST body
+        const res = await fetch(`${workerURL}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (!res.ok) throw new Error("Login failed");
+
+        const data = await res.json(); // Expects { "token": "..." }
+        if (data.token) {
+          authToken = data.token;
+          if (remember) {
+            localStorage.setItem("authToken", authToken);
+          }
+          showControlPanel();
+        } else {
+          loginStatus.textContent = "Login failed. Invalid response.";
+        }
+      } catch {
+        loginStatus.textContent = "Login or network issue.";
+      } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
+      }
+    }
+
+    /**
+     * Displays the control panel and starts polling for status.
+     */
+    function showControlPanel() {
+      document.getElementById("loginPage").style.display = "none";
+      const panel = document.getElementById("controlPage");
+      panel.style.display = "block";
+      setTimeout(() => panel.classList.add("show"), 50);
+      loadStatus();
+      refreshInterval = setInterval(loadStatus, 2000);
+    }
+
+    /**
+     * Fetches the status of ALL switches in one request.
+     */
+    async function loadStatus() {
+      try {
+        // **EFFICIENCY FIX:** One request for all statuses
+        const res = await fetchWithAuth(`${workerURL}/status`);
+        const status = await res.json(); // e.g., { "v1": "0", "v2": "1", ... }
+
+        switches.forEach((sw, index) => {
+          const btn = document.getElementById(sw.id);
+          const pinStatus = status[sw.pin];
+          if (pinStatus === undefined) {
+            btn.textContent = `${sw.name}: ?`;
+            btn.classList.remove("on");
+            return;
+          }
+          
+          const isOn = pinStatus.trim() === "0";
+          btn.classList.toggle("on", isOn);
+          btn.textContent = `${sw.name}: ${isOn ? "ON" : "OFF"}`;
+        });
+
+      } catch (error) {
+        if (error.message !== "Authentication failed") {
+          // Auth failures are handled by fetchWithAuth
+          console.error("Could not load status:", error);
+          switches.forEach(sw => {
+            document.getElementById(sw.id).textContent = `${sw.name}: ?`;
+          });
+        }
+      }
+    }
+
+    /**
+     * Toggles a single switch.
+     */
+    async function toggleSwitch(index) {
+      const sw = switches[index];
+      const btn = document.getElementById(sw.id);
+      
+      const wasOn = btn.classList.contains("on");
+      const newValue = wasOn ? "1" : "0"; // 0=ON, 1=OFF
+
+      // Optimistic UI update
+      btn.classList.toggle("on", !wasOn);
+      btn.textContent = `${sw.name}: ${!wasOn ? "ON" : "OFF"}`;
+
+      try {
+        // **SECURITY FIX:** Sending as POST body
+        await fetchWithAuth(`${workerURL}/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pin: sw.pin, value: newValue })
+        });
+      } catch {
+        alert("Network issue. Switch change was not saved.");
+        // **RELIABILITY FIX:** Revert UI on failure
+        btn.classList.toggle("on", wasOn);
+        btn.textContent = `${sw.name}: ${wasOn ? "ON" : "OFF"}`;
+      }
+    }
+    
+    /**
+     * Helper for bulk actions (All On / All Off)
+     */
+    async function bulkUpdate(action, optimisticState) {
+      // Optimistic UI update
+      switches.forEach(sw => {
+        const btn = document.getElementById(sw.id);
+        btn.classList.toggle("on", optimisticState);
+        btn.textContent = `${sw.name}: ${optimisticState ? "ON" : "OFF"}`;
+      });
+      
+      try {
+        // **EFFICIENCY FIX:** One request for all
+        await fetchWithAuth(`${workerURL}/${action}`, { method: "POST" });
+      } catch {
+        alert(`Failed to turn all switches ${optimisticState ? "ON" : "OFF"}.`);
+        // On failure, reload the actual state to be accurate
+        loadStatus(); 
+      }
+    }
+
+    function allOn() {
+      bulkUpdate("allOn", true);
+    }
+
+    function allOff() {
+      bulkUpdate("allOff", false);
+    }
+
+    /**
+     * Logs the user out, clears tokens, and returns to login screen.
+     */
+    function logout() {
+      clearInterval(refreshInterval);
+      localStorage.removeItem("authToken");
+      authToken = null;
+
+      const controlPage = document.getElementById("controlPage");
+      const loginPage = document.getElementById("loginPage");
+
+      controlPage.style.display = "none";
+      controlPage.classList.remove("show");
+      loginPage.style.display = "block";
+      setTimeout(() => loginPage.classList.add("show"), 50);
+
+      usernameInput.value = "";
+      passwordInput.value = "";
+      loginStatus.textContent = "";
+      document.getElementById("rememberMe").checked = false;
+    }
+  </script>
+</body>
+</html>
