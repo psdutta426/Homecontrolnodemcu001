@@ -1,136 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Parashar's Home Switch Control</title>
-<style>
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #d9f3ff, #f9f9f9);
-}
-.container {
-  position: relative;
-  width: 90%;
-  max-width: 450px;
-  padding: 30px;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-  text-align: center;
-  backdrop-filter: blur(8px);
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-  z-index: 1;
-}
-.show { opacity: 1; transform: translateY(0); }
-.container::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: url('https://raw.githubusercontent.com/psdutta426/Home/main/TheMathClassroom.jpg') no-repeat center center/cover;
-  opacity: 0.25;
-  z-index: -1;
-}
-h2 { color: #111; margin-bottom: 25px; font-weight: 600; }
-input {
-  padding: 12px; width: 85%; margin: 10px 0;
-  border-radius: 10px; border: 1px solid #ccc; font-size: 16px;
-}
-button {
-  border: none; border-radius: 10px; padding: 15px; margin: 10px;
-  font-size: 16px; transition: all 0.3s ease; cursor: pointer;
-}
-#loginBtn { width: 100%; background: #0078d7; color: white; }
-#loginBtn:hover { background: #005fa3; }
-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  user-select: none;
-}
-input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-.switch-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
-  gap: 15px; margin-bottom: 15px;
-}
-.switch-grid .switch-btn:nth-child(5) { grid-column: 1 / -1; }
-.switch-btn {
-  background: #f44336; color: white; font-weight: bold;
-  border-radius: 15px; height: 60px; font-size: 16px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  transition: all 0.3s ease;
-}
-.switch-btn.on {
-  background: #4CAF50;
-  box-shadow: 0 4px 12px rgba(76,175,80,0.5);
-}
-.action-btn { background: #0078d7; color: white; width: 45%; }
-.logout-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
-#loginStatus { color: red; font-size: 14px; height: 20px; }
-#voiceBtn { background:#FF9800; color:white; width:100%; }
-#voiceBtn.listening { background:#FF5722; }
-#loadingScreen {
-  position: fixed; top: 0; left:0; right:0; bottom:0;
-  display: flex; align-items:center; justify-content:center;
-  flex-direction:column; background: rgba(255,255,255,0.95);
-  font-size:18px; color:#333; z-index:999;
-  opacity:0; pointer-events:none; transition: opacity 0.5s ease;
-}
-#loadingScreen.show { opacity:1; pointer-events: all; }
-.spinner {
-  width:30px; height:30px; border:3px solid #ccc; border-top-color:#0078d7;
-  border-radius:50%; animation: spin 1s linear infinite; margin-bottom:12px;
-}
-@keyframes spin { 100% { transform: rotate(360deg); } }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parashar's Home Switch Control</title>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #d9f3ff, #f9f9f9);
+    }
+
+    .container {
+      position: relative;
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      text-align: center;
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      z-index: 1;
+    }
+    .show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: url('https://raw.githubusercontent.com/psdutta426/Home/main/TheMathClassroom.jpg')
+        no-repeat center center/cover;
+      opacity: 0.25;
+      z-index: -1;
+    }
+
+    h2 { color: #111; margin-bottom: 25px; font-weight: 600; }
+
+    input {
+      padding: 12px; width: 85%; margin: 10px 0;
+      border-radius: 10px; border: 1px solid #ccc; font-size: 16px;
+    }
+
+    button {
+      border: none; border-radius: 10px; padding: 15px; margin: 10px;
+      font-size: 16px; transition: all 0.3s ease; cursor: pointer;
+    }
+
+    #loginBtn { width: 100%; background: #0078d7; color: white; }
+    #loginBtn:hover { background: #005fa3; }
+
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .switch-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 15px; margin-bottom: 15px;
+    }
+
+    .switch-grid .switch-btn:nth-child(5) {
+      grid-column: 1 / -1;
+    }
+
+    .switch-btn {
+      background: #f44336; color: white; font-weight: bold;
+      border-radius: 15px; height: 60px; font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .switch-btn.on {
+      background: #4CAF50;
+      box-shadow: 0 4px 12px rgba(76,175,80,0.5);
+    }
+
+    .action-btn { background: #0078d7; color: white; width: 45%; }
+    .logout-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
+    #loginStatus { color: red; font-size: 14px; height: 20px; }
+
+    #loadingScreen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.95);
+      font-size: 18px;
+      color: #333;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #loadingScreen.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    #loadingMessage {
+      text-align: center;
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid #ccc;
+      border-top-color: #0078d7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
 </head>
+
 <body>
-<div id="loadingScreen">
-  <div class="spinner"></div>
-  <div id="loadingMessage">Checking saved session…</div>
-</div>
 
-<div class="container" id="loginPage">
-  <h2>Login</h2>
-  <input type="text" id="username" placeholder="Username" required /><br />
-  <input type="password" id="password" placeholder="Password" required /><br />
-  <label><input type="checkbox" id="rememberMe"> Remember Me</label>
-  <button id="loginBtn">Login</button>
-  <div id="loginStatus"></div>
-</div>
+  <!---------------- LOADING SCREEN ---------------->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div id="loadingMessage">Checking saved session…</div>
+  </div>
 
-<div class="container" id="controlPage" style="display:none;">
-  <h2>Parashar's Home Switch Control</h2>
-  <div class="switch-grid">
-    <button class="switch-btn" id="btn0" onclick="toggleSwitch(0)">Backup</button>
-    <button class="switch-btn" id="btn1" onclick="toggleSwitch(1)">Tubelight</button>
-    <button class="switch-btn" id="btn2" onclick="toggleSwitch(2)">Fan</button>
-    <button class="switch-btn" id="btn3" onclick="toggleSwitch(3)">Bulb</button>
-    <button class="switch-btn" id="btn4" onclick="toggleSwitch(4)">Plug</button>
+  <!---------------- LOGIN PAGE ---------------->
+  <div class="container" id="loginPage">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username" required /><br />
+    <input type="password" id="password" placeholder="Password" required /><br />
+    <label><input type="checkbox" id="rememberMe"> Remember Me</label>
+    <button id="loginBtn">Login</button>
+    <div id="loginStatus"></div>
   </div>
-  <div>
-    <button class="action-btn" onclick="bulkUpdateSequential(true)">All ON</button>
-    <button class="action-btn" onclick="bulkUpdateSequential(false)">All OFF</button>
+
+  <!---------------- CONTROL PAGE ---------------->
+  <div class="container" id="controlPage" style="display:none;">
+    <h2>Parashar's Home Switch Control</h2>
+
+    <div class="switch-grid">
+      <button class="switch-btn" id="btn0" onclick="toggleSwitch(0)">Backup</button>
+      <button class="switch-btn" id="btn1" onclick="toggleSwitch(1)">Tubelight</button>
+      <button class="switch-btn" id="btn2" onclick="toggleSwitch(2)">Fan</button>
+      <button class="switch-btn" id="btn3" onclick="toggleSwitch(3)">Bulb</button>
+      <button class="switch-btn" id="btn4" onclick="toggleSwitch(4)">Plug</button>
+    </div>
+
+    <div>
+      <button class="action-btn" onclick="bulkUpdateSequential(true)">All ON</button>
+      <button class="action-btn" onclick="bulkUpdateSequential(false)">All OFF</button>
+    </div>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
-  <button id="voiceBtn" onclick="startVoiceCommand()">🎤 Voice Command</button>
-  <button class="logout-btn" onclick="logout()">Logout</button>
-</div>
 
 <script>
+/* ---------------- CONFIG ---------------- */
 const workerURL = "https://nodemcubittu.psdutta426.workers.dev";
 let authToken = null;
+let refreshInterval;
+
 const switches = [
   { id: "btn0", name: "Backup", pin: "v1" },
   { id: "btn1", name: "Tubelight", pin: "v2" },
@@ -139,106 +191,180 @@ const switches = [
   { id: "btn4", name: "Plug", pin: "v5" }
 ];
 
-document.getElementById("loginBtn").addEventListener("click", login);
-document.getElementById("username").addEventListener("keypress", e=>{if(e.key==="Enter"){e.preventDefault(); document.getElementById("password").focus();}});
-document.getElementById("password").addEventListener("keypress", e=>{if(e.key==="Enter"){e.preventDefault(); login();}});
+const loginBtn = document.getElementById("loginBtn");
+const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const loadingScreen = document.getElementById("loadingScreen");
+const loginStatus = document.getElementById("loginStatus");
 
+/* ---------------- EVENT LISTENERS ---------------- */
+loginBtn.addEventListener("click", login);
+usernameInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") passwordInput.focus();
+});
+passwordInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") login();
+});
+
+window.addEventListener("load", autoLogin);
+
+/* ---------------- FETCH WITH AUTH ---------------- */
+async function fetchWithAuth(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+  if (authToken) headers.append("Authorization", `Bearer ${authToken}`);
+
+  const res = await fetch(url, { ...options, headers });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      alert("Session expired. Please login again.");
+      logout();
+      throw new Error("Auth failed");
+    }
+    throw new Error("Network error");
+  }
+  return res;
+}
+
+/* ---------------- AUTO LOGIN ---------------- */
+async function autoLogin() {
+  loadingScreen.classList.add("show");
+  const saved = localStorage.getItem("authToken");
+
+  if (saved) {
+    authToken = saved;
+    try {
+      await fetchWithAuth(`${workerURL}/status`);
+      showControl();
+      return;
+    } catch {
+      localStorage.removeItem("authToken");
+    }
+  }
+
+  setTimeout(() => {
+    loadingScreen.classList.remove("show");
+    document.getElementById("loginPage").classList.add("show");
+  }, 500);
+}
+
+/* ---------------- LOGIN ---------------- */
 async function login() {
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
+  const usernameVal = usernameInput.value.trim();
+  const passwordVal = passwordInput.value.trim();
+  const remember = document.getElementById("rememberMe").checked;
+
+  if (!usernameVal || !passwordVal) {
+    loginStatus.textContent = "Enter username & password.";
+    return;
+  }
 
   try {
-    const r = await fetch(workerURL + "/login", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({username,password})});
-    if(!r.ok) throw new Error("Login failed");
-    const data = await r.json();
-    authToken = data.token;
+    const res = await fetch(`${workerURL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: usernameVal, password: passwordVal })
+    });
 
-    document.getElementById("loginPage").style.display="none";
-    document.getElementById("controlPage").style.display="block";
-    loadStatus();
+    if (!res.ok) throw new Error();
+
+    const data = await res.json();
+    authToken = data.token;
+    if (remember) localStorage.setItem("authToken", authToken);
+
+    showControl();
   } catch {
-    document.getElementById("loginStatus").textContent="Invalid login";
+    loginStatus.textContent = "Invalid login.";
   }
 }
 
-async function fetchWithAuth(url, options={}) {
-  options.headers = options.headers||{};
-  options.headers["Authorization"]="Bearer "+authToken;
-  return await fetch(url, options);
+/* ---------------- SHOW CONTROL PANEL ---------------- */
+function showControl() {
+  document.getElementById("loginPage").style.display = "none";
+  const panel = document.getElementById("controlPage");
+  panel.style.display = "block";
+  setTimeout(() => panel.classList.add("show"), 50);
+
+  loadStatus();
+  refreshInterval = setInterval(loadStatus, 2000);
 }
 
+/* ---------------- LOAD SWITCH STATUS ---------------- */
 async function loadStatus() {
   try {
-    const r = await fetchWithAuth(workerURL+"/status");
-    const status = await r.json();
-    switches.forEach(sw=>{
-      const btn=document.getElementById(sw.id);
-      const val=status[sw.pin];
-      const isOn=val==="0";
-      btn.classList.toggle("on",isOn);
-      btn.textContent=`${sw.name}: ${isOn ? "ON" : "OFF"}`;
+    const res = await fetchWithAuth(`${workerURL}/status`);
+    const status = await res.json();
+
+    switches.forEach(sw => {
+      const btn = document.getElementById(sw.id);
+      const isOn = status[sw.pin] === "0";
+
+      btn.classList.toggle("on", isOn);
+      btn.textContent = `${sw.name}: ${isOn ? "ON" : "OFF"}`;
     });
-  } catch {}
+
+  } catch (err) {
+    console.error(err);
+  }
 }
 
+/* ---------------- TOGGLE A SWITCH ---------------- */
 async function toggleSwitch(index) {
   const sw = switches[index];
   const btn = document.getElementById(sw.id);
-  const isOn = btn.classList.contains("on");
-  const newVal = isOn?"1":"0";
-  await fetchWithAuth(workerURL+"/update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pin:sw.pin,value:newVal})});
-  loadStatus();
-  speak(`${sw.name} turned ${newVal==="0"?"ON":"OFF"} ✅`);
-}
 
-async function bulkUpdateSequential(state) {
-  for(const sw of switches){
-    await fetchWithAuth(workerURL+"/update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pin:sw.pin,value:state?"0":"1"})});
-    await new Promise(r=>setTimeout(r,120));
+  const wasOn = btn.classList.contains("on");
+  const newVal = wasOn ? "1" : "0";
+
+  btn.classList.toggle("on", !wasOn);
+  btn.textContent = `${sw.name}: ${!wasOn ? "ON" : "OFF"}`;
+
+  try {
+    await fetchWithAuth(`${workerURL}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: sw.pin, value: newVal })
+    });
+  } catch {
+    btn.classList.toggle("on", wasOn);
+    btn.textContent = `${sw.name}: ${wasOn ? "ON" : "OFF"}`;
   }
-  loadStatus();
-  speak(`All switches turned ${state?"ON":"OFF"} ${state?"✅":"❌"}`);
 }
 
-function startVoiceCommand(){
-  const btn=document.getElementById("voiceBtn");
-  if(!("webkitSpeechRecognition" in window)){alert("Voice control not supported."); return;}
-  const recog = new webkitSpeechRecognition();
-  recog.lang="en-IN";
-  recog.interimResults=false;
+/* ---------------- SEQUENTIAL ALL ON/OFF ---------------- */
+async function bulkUpdateSequential(turnOn) {
+  for (const sw of switches) {
+    try {
+      await fetchWithAuth(`${workerURL}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: sw.pin, value: turnOn ? "0" : "1" })
+      });
 
-  btn.classList.add("listening");
-  btn.textContent="🎤 Listening…";
+      const btn = document.getElementById(sw.id);
+      btn.classList.toggle("on", turnOn);
+      btn.textContent = `${sw.name}: ${turnOn ? "ON" : "OFF"}`;
 
-  recog.onresult=async e=>{
-    const text=e.results[0][0].transcript.toLowerCase();
-    btn.textContent="🎤 Voice Command";
-    btn.classList.remove("listening");
-
-    if(text.includes("all on")) return bulkUpdateSequential(true);
-    if(text.includes("all off")) return bulkUpdateSequential(false);
-
-    for(const sw of switches){
-      if(text.includes(sw.name.toLowerCase())){
-        if(text.includes("on")) return toggleByVoice(sw.pin,sw.name,"0");
-        if(text.includes("off")) return toggleByVoice(sw.pin,sw.name,"1");
-      }
+      await new Promise(r => setTimeout(r, 80));
+    } catch (err) {
+      console.error("Failed:", sw.pin);
     }
-    speak("Command not recognized");
-    alert("Command not recognized");
-  };
-  recog.onerror=()=>{btn.textContent="🎤 Voice Command"; btn.classList.remove("listening");};
-  recog.start();
+  }
 }
 
-async function toggleByVoice(pin,name,value){
-  await fetchWithAuth(workerURL+"/update",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pin,value})});
-  loadStatus();
-  speak(`${name} turned ${value==="0"?"ON":"OFF"} ✅`);
+/* ---------------- LOGOUT ---------------- */
+function logout() {
+  clearInterval(refreshInterval);
+  localStorage.removeItem("authToken");
+  authToken = null;
+
+  document.getElementById("controlPage").style.display = "none";
+  const loginPage = document.getElementById("loginPage");
+  loginPage.style.display = "block";
+  setTimeout(() => loginPage.classList.add("show"), 50);
 }
 
-function speak(msg){if(!("speechSynthesis" in window))return; const u=new SpeechSynthesisUtterance(msg); u.rate=1; u.pitch=1; window.speechSynthesis.speak(u);}
-function logout(){authToken=null; location.reload();}
 </script>
 </body>
 </html>
+
